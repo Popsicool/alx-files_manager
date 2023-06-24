@@ -9,7 +9,7 @@ class DBClient {
     this.isConnected = false;
     this.Client = MongoClient(`mongodb://${HOST}:${PORT}`, { useUnifiedTopology: true, useNewUrlParser: true });
     this.Client.connect().then(() => {
-      this.db = this.client.db(`${DATABASE}`);
+      this.db = this.Client.db(`${DATABASE}`);
       this.isConnected = true;
     }).catch((error) => {
       console.log(error);
