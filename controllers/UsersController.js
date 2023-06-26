@@ -44,7 +44,7 @@ class UsersController {
       return;
     }
 
-    res.status(200).json({ email: user.email, id });
+    res.status(201).json({ email: user.email, id });
   }
 }
 
