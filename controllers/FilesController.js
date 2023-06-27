@@ -182,14 +182,14 @@ class FilesController {
     const fileId = new ObjectId(id);
     const update = { $set: { isPublic: true } };
     const options = { returnOriginal: false };
-    files.findOneAndUpdate({ _id: fileId, userId: user._id}, update, options, (err, result) => {
+    files.findOneAndUpdate({ _id: fileId, userId: user._id }, update, options, (err, result) => {
       if (!result.lastErrorObject.updatedExisting) {
         res.status(404).json({ error: 'Not found' });
         return;
       }
       res.status(200).json(result.value);
     });
-  };
+  }
 
   static async putUnpublish(req, res) {
     const user = await FilesController.getUser(req);
@@ -202,14 +202,14 @@ class FilesController {
     const fileId = new ObjectId(id);
     const update = { $set: { isPublic: false } };
     const options = { returnOriginal: false };
-    files.findOneAndUpdate({ _id: fileId, userId: user._id}, update, options, (err, result) => {
+    files.findOneAndUpdate({ _id: fileId, userId: user._id }, update, options, (err, result) => {
       if (!result.lastErrorObject.updatedExisting) {
         res.status(404).json({ error: 'Not found' });
         return;
       }
       res.status(200).json(result.value);
     });
-  };
+  }
 }
 
 module.exports = FilesController;
