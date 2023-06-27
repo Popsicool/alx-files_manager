@@ -6,7 +6,7 @@ import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
 const fs = require('fs');
-
+const fileQueue = new Queue('fileQueue', 'redis://127.0.0.1:6379');
 class FilesController {
   static async getUser(req) {
     const auths = req.header('X-Token');
@@ -90,6 +90,12 @@ class FilesController {
     } catch (error) {
       console.log(error);
     }
+    fileQueue.add(
+      {
+        userId: user._id,
+        fileId: result.insertedId,
+      },
+    );
     await files.insertOne({
       userId: user._id,
       name,
@@ -215,7 +221,7 @@ class FilesController {
 
   static async getFile(req, res) {
     const files = await dbClient.db.collection('files');
-    const { id } = req.params;
+    const { id, size } = req.params;
     const fileId = new ObjectId(id);
     const file = await files.findOne({ _id: fileId });
     if (!file) {
@@ -226,7 +232,10 @@ class FilesController {
       res.status(400).json({ error: 'A folder doesn\'t have content' });
       return;
     }
-    const filePath = file.localPath;
+    let filePath = file.localPath;
+    if (size) {
+      filePath = `${file.localPath}_${size}`;
+    }
     fs.access(filePath, fs.F_OK, (err) => {
       if (err) {
         res.status(404).json({ error: 'Not found' });

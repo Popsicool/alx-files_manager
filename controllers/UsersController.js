@@ -3,6 +3,7 @@ import { ObjectID } from 'mongodb';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
+const userQueue = new Queue('userQueue', 'redis://127.0.0.1:6379');
 class UsersController {
   static async postNew(req, res) {
     const { email } = req.body;
@@ -22,7 +23,11 @@ class UsersController {
     }
     const passwordHash = sha1(password);
     await dbClient.db.collection('users').insertOne({ email, password: passwordHash })
-      .then((result) => res.json({ id: result.insertedId, email }));
+      .then((result) => {
+        userQueue.add({ userId: result.insertedId });
+        res.json({ id: result.insertedId, email })
+      }
+      );
   }
 
   static async getMe(req, res) {
