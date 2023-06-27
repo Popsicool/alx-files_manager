@@ -107,6 +107,71 @@ class FilesController {
         });
       });
   }
+
+  static async getShow(req, res) {
+    const user = await FilesController.getUser(req);
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const files = await dbClient.db.collection('files');
+    const { id } = req.params;
+    const fileId = new ObjectId(id);
+    const file = await files.findOne({ _id: fileId });
+    if (!file) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    if (file.userId !== user._id) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    res.status(200).json(file);
+    return;
+  }
+
+  static async getIndex (req, res) {
+    const files = await dbClient.db.collection('files');
+    const user = await FilesController.getUser(req);
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { parentId, page } = req.query;
+    const pageNum = page || 0;
+    let query;
+    if (parentId) {
+      query = { userId: user._id, parentId: new ObjectId(parentId) };
+    } else {
+      query = { userId: user._id };
+    }
+    await files.aggregate(
+      [
+        { $match: query },
+        { $sort: { _id: -1 } },
+        {
+          $facet: {
+            metadata: [{ $count: 'total' }, { $addFields: { page: parseInt(pageNum, 10) } }],
+            data: [{ $skip: 20 * parseInt(pageNum, 10) }, { $limit: 20 }],
+          },
+        },
+      ]).toArray((error, result) => {
+        if (result) {
+          const response = result[0].data.map((file) => {
+            const inFil = { ...file, id: file._id };
+            delete inFil._id;
+            delete inFil.localPath;
+            return inFil;
+          })
+          res.status(200).json(response);
+          return;
+        }
+        console.log("An Error Occured");
+        return res.status(404).json({ error: 'Not found' });
+      }
+    )
+    return null
+  }
 }
 
 module.exports = FilesController;
