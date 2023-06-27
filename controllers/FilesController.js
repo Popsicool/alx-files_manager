@@ -6,6 +6,7 @@ import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
 const fs = require('fs');
+
 const fileQueue = new Queue('fileQueue', 'redis://127.0.0.1:6379');
 class FilesController {
   static async getUser(req) {
@@ -90,12 +91,6 @@ class FilesController {
     } catch (error) {
       console.log(error);
     }
-    fileQueue.add(
-      {
-        userId: user._id,
-        fileId: result.insertedId,
-      },
-    );
     await files.insertOne({
       userId: user._id,
       name,
@@ -105,6 +100,12 @@ class FilesController {
       localPath: fileName,
     })
       .then((result) => {
+        fileQueue.add(
+          {
+            userId: user._id,
+            fileId: result.insertedId,
+          },
+        );
         res.status(201).json({
           id: result.insertedId,
           userId: user._id,

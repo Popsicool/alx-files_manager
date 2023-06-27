@@ -1,5 +1,6 @@
 import sha1 from 'sha1';
 import { ObjectID } from 'mongodb';
+import Queue from 'bull';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
@@ -25,9 +26,8 @@ class UsersController {
     await dbClient.db.collection('users').insertOne({ email, password: passwordHash })
       .then((result) => {
         userQueue.add({ userId: result.insertedId });
-        res.json({ id: result.insertedId, email })
-      }
-      );
+        res.json({ id: result.insertedId, email });
+      });
   }
 
   static async getMe(req, res) {
