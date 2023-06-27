@@ -127,10 +127,9 @@ class FilesController {
       return;
     }
     res.status(200).json(file);
-    return;
   }
 
-  static async getIndex (req, res) {
+  static async getIndex(req, res) {
     const files = await dbClient.db.collection('files');
     const user = await FilesController.getUser(req);
     if (!user) {
@@ -155,22 +154,21 @@ class FilesController {
             data: [{ $skip: 20 * parseInt(pageNum, 10) }, { $limit: 20 }],
           },
         },
-      ]).toArray((error, result) => {
-        if (result) {
-          const response = result[0].data.map((file) => {
-            const inFil = { ...file, id: file._id };
-            delete inFil._id;
-            delete inFil.localPath;
-            return inFil;
-          })
-          res.status(200).json(response);
-          return;
-        }
-        console.log("An Error Occured");
-        return res.status(404).json({ error: 'Not found' });
+      ],
+    ).toArray((error, result) => {
+      if (result) {
+        const response = result[0].data.map((file) => {
+          const inFil = { ...file, id: file._id };
+          delete inFil._id;
+          delete inFil.localPath;
+          return inFil;
+        });
+        res.status(200).json(response);
+        return;
       }
-    )
-    return null
+      console.log('An Error Occured');
+      res.status(404).json({ error: 'Not found' });
+    });
   }
 }
 
