@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { v4 } from 'uuid';
 import mime from 'mime-types';
-import Queue from 'bull';
+// import Queue from 'bull';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
@@ -221,20 +221,27 @@ class FilesController {
     if (!file) {
       res.status(404).json({ error: 'Not found' });
       return;
-    };
+    }
     if (file.type === 'folder') {
       res.status(400).json({ error: 'A folder doesn\'t have content' });
       return;
     }
     const filePath = file.localPath;
+    let present;
     fs.access(filePath, fs.F_OK, (err) => {
       if (err) {
+        present = false;
         res.status(404).json({ error: 'Not found' });
-        return;
+      } else {
+        present = true;
       }
-    })
-    const contentType = mime.contentType(file.name);
-    res.header('Content-Type', contentType).status(200).sendFile(fileName);
+    });
+    if (present) {
+      const contentType = mime.contentType(file.name);
+      res.header('Content-Type', contentType).status(200).sendFile(filePath);
+      return;
+    }
+    res.status(404).json({ error: 'Not found' });
   }
 }
 
