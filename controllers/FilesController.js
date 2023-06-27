@@ -227,23 +227,33 @@ class FilesController {
     if (!file) {
       res.status(404).json({ error: 'Not found' });
       return;
-    };
+    }
     if (file.type === 'folder') {
       res.status(400).json({ error: 'A folder doesn\'t have content' });
       return;
     }
+
     let filePath = file.localPath;
     if (size) {
       filePath = `${file.localPath}_${size}`;
     }
+
+    let present;
+
     fs.access(filePath, fs.F_OK, (err) => {
       if (err) {
+        present = false;
         res.status(404).json({ error: 'Not found' });
-        return;
+      } else {
+        present = true;
       }
-    })
-    const contentType = mime.contentType(file.name);
-    res.header('Content-Type', contentType).status(200).sendFile(fileName);
+    });
+    if (present) {
+      const contentType = mime.contentType(file.name);
+      res.header('Content-Type', contentType).status(200).sendFile(filePath);
+      return;
+    }
+    res.status(404).json({ error: 'Not found' });
   }
 }
 
